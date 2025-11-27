@@ -119,7 +119,7 @@ IMPORTANT: Return ONLY the JSON array, no other text or markdown formatting.`;
         .trim();
       
       questions = JSON.parse(cleanedResponse);
-    } catch (parseError) {
+    } catch {
       console.error('Failed to parse OpenAI response:', responseText);
       return NextResponse.json(
         { error: 'Failed to parse quiz questions', details: responseText },

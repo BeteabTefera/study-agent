@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useEffect, useState } from "react"
 import {
@@ -17,10 +17,21 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Spinner } from "@/components/ui/spinner"
-import { CheckCircle, XCircle, Calendar, BookOpen, Target, FileQuestion } from "lucide-react"
+import { CheckCircle, Calendar, BookOpen, Target, FileQuestion, LineChart as LineChartIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { toast } from "sonner"
+
+// Charts
+import {
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer
+} from "recharts"
 
 interface Question {
   id: number
@@ -44,8 +55,7 @@ export default function HistoryPage() {
   const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Hardcoded userId - replace with actual auth later
-  const userId = "123e4567-e89b-12d3-a456-426614174000"
+  const userId = "123e4567-e89b-12d3-a456-426614174000" // temp
 
   useEffect(() => {
     fetchQuizHistory()
@@ -55,11 +65,9 @@ export default function HistoryPage() {
     setLoading(true)
     try {
       const response = await fetch(`/api/history?userId=${userId}`)
-      
       if (!response.ok) throw new Error("Failed to fetch history")
-      
+
       const data = await response.json()
-      
       if (data.success) {
         setQuizAttempts(data.quizzes || [])
       }
@@ -73,12 +81,9 @@ export default function HistoryPage() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
     }).format(date)
   }
 
@@ -89,17 +94,42 @@ export default function HistoryPage() {
     return "bg-red-100 text-red-800 border-red-300"
   }
 
-  const getScoreBadgeVariant = (score: number, total: number): "default" | "secondary" | "destructive" | "outline" => {
+  const getScoreBadgeVariant = (score: number, total: number) => {
     const percentage = (score / total) * 100
     if (percentage >= 80) return "default"
     if (percentage >= 60) return "secondary"
     return "destructive"
   }
 
+  // 🔥 Derived stats
+  const stats = {
+    total: quizAttempts.length,
+    avgScore:
+      quizAttempts.length > 0
+        ? Math.round(
+            quizAttempts.reduce((acc, q) => acc + (q.score / q.total_questions) * 100, 0) /
+              quizAttempts.length
+          )
+        : 0,
+    best:
+      quizAttempts.length > 0
+        ? Math.max(
+            ...quizAttempts.map((q) => Math.round((q.score / q.total_questions) * 100))
+          )
+        : 0,
+    topics: [...new Set(quizAttempts.map((q) => q.topic))],
+  }
+
+  // 🔥 Chart Data
+  const chartData = quizAttempts.map((attempt) => ({
+    name: formatDate(attempt.created_at),
+    score: Math.round((attempt.score / attempt.total_questions) * 100),
+  }))
+
   if (loading) {
     return (
       <div className="p-8 sm:p-20">
-        <div className="mb-6">                 
+        <div className="mb-6">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -125,8 +155,9 @@ export default function HistoryPage() {
 
   return (
     <div className="p-8 sm:p-20 max-w-6xl mx-auto">
-      {/* Breadcrumb Navigation */}
-      <div className="mb-6">                 
+
+      {/* 🔥 Breadcrumbs */}
+      <div className="mb-6">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -144,14 +175,60 @@ export default function HistoryPage() {
         </Breadcrumb>
       </div>
 
+      {/* 🔥 Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Quiz History</h1>
         <Badge variant="outline" className="text-sm">
-          {quizAttempts.length} {quizAttempts.length === 1 ? 'Quiz' : 'Quizzes'}
+          {stats.total} {stats.total === 1 ? "Quiz" : "Quizzes"}
         </Badge>
       </div>
 
-      {/* Empty State */}
+      {/* 🔥 Stats + Chart */}
+      {quizAttempts.length > 0 && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <LineChartIcon size={20} />
+              Your Progress Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Quizzes</p>
+                <p className="text-xl font-semibold">{stats.total}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Average Score</p>
+                <p className="text-xl font-semibold">{stats.avgScore}%</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Best Score</p>
+                <p className="text-xl font-semibold">{stats.best}%</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Topics</p>
+                <p className="text-xl font-semibold">{stats.topics.length}</p>
+              </div>
+            </div>
+
+            {/* Chart */}
+            <div className="h-60">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis domain={[0, 100]} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="score" stroke="#4f46e5" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 🔥 Empty State */}
       {quizAttempts.length === 0 ? (
         <Card className="mt-8">
           <CardContent className="flex flex-col items-center justify-center py-16">
@@ -160,7 +237,7 @@ export default function HistoryPage() {
             </div>
             <h3 className="text-xl font-semibold mb-2">No quiz attempts yet</h3>
             <p className="text-muted-foreground mb-6 text-center max-w-sm">
-              Take your first quiz to see your history and track your progress here
+              Take your first quiz to see your history and track your progress here.
             </p>
             <Link href="/practice">
               <Button>Start Practice</Button>
@@ -168,10 +245,13 @@ export default function HistoryPage() {
           </CardContent>
         </Card>
       ) : (
+        /* 🔥 HISTORY LIST (your existing UI) */
         <div className="space-y-4">
           {quizAttempts.map((attempt) => {
-            const percentage = Math.round((attempt.score / attempt.total_questions) * 100)
-            
+            const percentage = Math.round(
+              (attempt.score / attempt.total_questions) * 100
+            )
+
             return (
               <Card key={attempt.id} className="overflow-hidden">
                 <CardHeader className={`${getScoreColor(attempt.score, attempt.total_questions)} border-b`}>
@@ -192,16 +272,15 @@ export default function HistoryPage() {
                         </div>
                       </div>
                     </div>
+
                     <div className="text-right">
-                      <Badge 
+                      <Badge
                         variant={getScoreBadgeVariant(attempt.score, attempt.total_questions)}
                         className="text-lg px-3 py-1"
                       >
                         {attempt.score}/{attempt.total_questions}
                       </Badge>
-                      <p className="text-sm mt-1 font-semibold">
-                        {percentage}%
-                      </p>
+                      <p className="text-sm mt-1 font-semibold">{percentage}%</p>
                     </div>
                   </div>
                 </CardHeader>
@@ -218,11 +297,12 @@ export default function HistoryPage() {
                         </AccordionTrigger>
                         <AccordionContent>
                           <div className="space-y-3 pt-2">
+
                             {/* Options */}
                             <div className="space-y-2">
                               {question.options.map((option, optionIndex) => {
                                 const isCorrect = optionIndex === question.correctAnswer
-                                
+
                                 return (
                                   <div
                                     key={optionIndex}
@@ -252,8 +332,9 @@ export default function HistoryPage() {
                                 {question.explanation}
                               </p>
                             </div>
+
                           </div>
-                        </AccordionContent>AWS Cloud Practitioner Exa
+                        </AccordionContent>
                       </AccordionItem>
                     ))}
                   </Accordion>

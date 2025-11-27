@@ -1,14 +1,7 @@
 'use client'
-
 import React, { useState, useCallback } from "react"
 import { toast } from "sonner"
 import { Spinner } from "@/components/ui/spinner"
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent
-} from "@/components/ui/accordion"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import {
   Breadcrumb,

@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     const uniqueFileName = `${userId}/${timestamp}_${sanitizedFileName}`;
 
     // Upload file to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('study-materials') // Make sure this bucket exists in Supabase
       .upload(uniqueFileName, file, {
         contentType: file.type,
