@@ -1,5 +1,5 @@
 "use client"
-
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel"
 import { useEffect, useState } from "react"
 import {
   Accordion,
@@ -247,101 +247,110 @@ export default function HistoryPage() {
       ) : (
         /* 🔥 HISTORY LIST (your existing UI) */
         <div className="space-y-4">
-          {quizAttempts.map((attempt) => {
-            const percentage = Math.round(
-              (attempt.score / attempt.total_questions) * 100
-            )
+          {/* 🔥 HISTORY LIST (Carousel of attempts) */}
+          <Carousel className="w-full max-w-xl mx-auto">
+            <CarouselContent>
+              {quizAttempts.map((attempt) => {
+                const percentage = Math.round(
+                  (attempt.score / attempt.total_questions) * 100
+                )
 
-            return (
-              <Card key={attempt.id} className="overflow-hidden">
-                <CardHeader className={`${getScoreColor(attempt.score, attempt.total_questions)} border-b`}>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg mb-2 flex items-center gap-2">
-                        <BookOpen size={20} />
-                        {attempt.topic}
-                      </CardTitle>
-                      <div className="flex flex-wrap items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1">
-                          <Calendar size={16} />
-                          <span>{formatDate(attempt.created_at)}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Target size={16} />
-                          <span>{attempt.total_questions} Questions</span>
-                        </div>
-                      </div>
-                    </div>
+                return (
+                  <CarouselItem key={attempt.id}>
+                    <Card className="overflow-hidden">
+                      <CardHeader className={`${getScoreColor(attempt.score, attempt.total_questions)} border-b`}>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <CardTitle className="text-lg mb-2 flex items-center gap-2">
+                              <BookOpen size={20} />
+                              {attempt.topic}
+                            </CardTitle>
 
-                    <div className="text-right">
-                      <Badge
-                        variant={getScoreBadgeVariant(attempt.score, attempt.total_questions)}
-                        className="text-lg px-3 py-1"
-                      >
-                        {attempt.score}/{attempt.total_questions}
-                      </Badge>
-                      <p className="text-sm mt-1 font-semibold">{percentage}%</p>
-                    </div>
-                  </div>
-                </CardHeader>
+                            <div className="flex flex-wrap items-center gap-4 text-sm">
+                              <div className="flex items-center gap-1">
+                                <Calendar size={16} />
+                                <span>{formatDate(attempt.created_at)}</span>
+                              </div>
 
-                <CardContent className="pt-4">
-                  <Accordion type="single" collapsible className="w-full">
-                    {attempt.questions.map((question, index) => (
-                      <AccordionItem key={question.id} value={`question-${question.id}`}>
-                        <AccordionTrigger className="hover:no-underline">
-                          <div className="flex items-center gap-2 text-left">
-                            <span className="font-semibold">Q{index + 1}:</span>
-                            <span className="flex-1">{question.question}</span>
+                              <div className="flex items-center gap-1">
+                                <Target size={16} />
+                                <span>{attempt.total_questions} Questions</span>
+                              </div>
+                            </div>
                           </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div className="space-y-3 pt-2">
 
-                            {/* Options */}
-                            <div className="space-y-2">
-                              {question.options.map((option, optionIndex) => {
-                                const isCorrect = optionIndex === question.correctAnswer
+                          <div className="text-right">
+                            <Badge
+                              variant={getScoreBadgeVariant(attempt.score, attempt.total_questions)}
+                              className="text-lg px-3 py-1"
+                            >
+                              {attempt.score}/{attempt.total_questions}
+                            </Badge>
+                            <p className="text-sm mt-1 font-semibold">{percentage}%</p>
+                          </div>
+                        </div>
+                      </CardHeader>
 
-                                return (
-                                  <div
-                                    key={optionIndex}
-                                    className={`p-3 rounded-md border ${
-                                      isCorrect
-                                        ? "bg-green-50 border-green-300"
-                                        : "bg-gray-50 border-gray-200"
-                                    }`}
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <span>{option}</span>
-                                      {isCorrect && (
-                                        <CheckCircle className="text-green-600" size={18} />
-                                      )}
-                                    </div>
+                      <CardContent className="pt-4">
+                        <Accordion type="single" collapsible className="w-full">
+                          {attempt.questions.map((question, index) => (
+                            <AccordionItem key={question.id} value={`question-${question.id}`}>
+                              <AccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-2 text-left">
+                                  <span className="font-semibold">Q{index + 1}:</span>
+                                  <span className="flex-1">{question.question}</span>
+                                </div>
+                              </AccordionTrigger>
+
+                              <AccordionContent>
+                                <div className="space-y-3 pt-2">
+
+                                  {/* Options */}
+                                  <div className="space-y-2">
+                                    {question.options.map((option, optionIndex) => {
+                                      const isCorrect = optionIndex === question.correctAnswer
+
+                                      return (
+                                        <div
+                                          key={optionIndex}
+                                          className={`p-3 rounded-md border ${
+                                            isCorrect
+                                              ? "bg-green-50 border-green-300"
+                                              : "bg-gray-50 border-gray-200"
+                                          }`}
+                                        >
+                                          <div className="flex items-center justify-between">
+                                            <span>{option}</span>
+                                            {isCorrect && (
+                                              <CheckCircle className="text-green-600" size={18} />
+                                            )}
+                                          </div>
+                                        </div>
+                                      )
+                                    })}
                                   </div>
-                                )
-                              })}
-                            </div>
 
-                            {/* Explanation */}
-                            <div className="p-4 bg-blue-50 rounded-md border border-blue-200">
-                              <p className="text-sm font-semibold text-blue-900 mb-2">
-                                Explanation:
-                              </p>
-                              <p className="text-sm text-blue-800">
-                                {question.explanation}
-                              </p>
-                            </div>
+                                  {/* Explanation */}
+                                  <div className="p-4 bg-blue-50 rounded-md border border-blue-200">
+                                    <p className="text-sm font-semibold text-blue-900 mb-2">Explanation:</p>
+                                    <p className="text-sm text-blue-800">{question.explanation}</p>
+                                  </div>
 
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                </CardContent>
-              </Card>
-            )
-          })}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          ))}
+                        </Accordion>
+                      </CardContent>
+                    </Card>
+                  </CarouselItem>
+                )
+              })}
+            </CarouselContent>
+
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
         </div>
       )}
     </div>
